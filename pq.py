@@ -36,13 +36,38 @@ class GenresTooManyError(pqError):
 	"""Raised when the genres are more than 19. 
 
 	Attribute:
-		expression -- then number of genres in which the error occurred
+		expression -- the number of genres in which the error occurred
 	"""
 	def __init__(self, expression):
 		self.expression = expression
 		self.message = str(expression) + " genres are too many. (Maximum 19 genres)"
 	def __str__(self):
 		return repr(self.message)
+
+class QuestionTooManyError(pqError):
+	"""Raised when the questions are more than 384. 
+
+	Attribute:
+		expression -- the number of questions in which the error occurred
+	"""
+	def __init__(self, expression):
+		self.expression = expression
+		self.message = str(expression) + " questions are too many. (Maximum 384 questions)"
+	def __str__(self):
+		return repr(self.message)
+
+class QuestionSizeOverError(pqError):
+	"""Raised when the questions size is larger than 47872bytes. 
+
+	Attribute:
+		expression -- the size of questions in which the error occurred
+	"""
+	def __init__(self, expression):
+		self.expression = expression
+		self.message = "the current questions size (" + str(expression) + "bytes) is larger than 48872bytes."
+	def __str__(self):
+		return repr(self.message)
+
 
 def get_genre_index(genre_list, genre):
 	if genre in genre_list :
@@ -57,6 +82,8 @@ def make_quesion_data(fin, fout, syserr, enc):
 	qdata = ""  #the body of question data
 	gdata = ""  #the body of genre index data
 	b = 256*5   #the haed of the question data
+	qdata_max = 47872  #the maximum size of qdata (=256*187)
+	questions_max = 384  #the maximum number of questions
 	genre_list = list() #the list of genre
 
 	#make data from fin
@@ -88,6 +115,10 @@ def make_quesion_data(fin, fout, syserr, enc):
 		gdata += struct.pack('>10s',struct.pack('<'+str(len(ec))+'s',ec))
 
 	#write data to file
+	if cnt > questions_max :
+		raise QuestionTooManyError, cnt
+	if len(qdata) > qdata_max :
+		raise QuestionSizeOverError, len(qdata)
 	hdata = struct.pack('>64s',struct.pack('>H',cnt)) + struct.pack('>192s', gdata)
 	fout.write(hdata)
 	idata = struct.pack('>1024s',idata)
