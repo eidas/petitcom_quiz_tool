@@ -33,14 +33,14 @@ class GenreNameTooLongError(pqError):
 		return repr(self.message)
 
 class GenresTooManyError(pqError):
-	"""Raised when the genres are more than 19. 
+	"""Raised when the genres are more than 20. 
 
 	Attribute:
 		expression -- the number of genres in which the error occurred
 	"""
 	def __init__(self, expression):
 		self.expression = expression
-		self.message = str(expression) + " genres are too many. (Maximum 19 genres)"
+		self.message = str(expression) + " genres are too many. (Maximum 20 genres)"
 	def __str__(self):
 		return repr(self.message)
 
@@ -84,6 +84,8 @@ def make_quesion_data(fin, fout, syserr, enc):
 	b = 256*5   #the haed of the question data
 	qdata_max = 47872  #the maximum size of qdata (=256*187)
 	questions_max = 384  #the maximum number of questions
+	genres_max = 20  #the maximum number of genres
+	genre_len_max = 10  #the maximum length of a genre name
 	genre_list = list() #the list of genre
 
 	#make data from fin
@@ -107,12 +109,13 @@ def make_quesion_data(fin, fout, syserr, enc):
 		cnt += 1
 
 	#make genre data
-	if len(genre_list)>=19 :
+	if len(genre_list)>=genres_max :
 		raise GenresTooManyError, len(genre_list)
 	for e in genre_list:
 		ec = e.encode(enc)
-		if len(ec)>10 :
+		if len(ec)>genre_len_max :
 			raise GenreNameTooLongError, e
+		gdata += struct.pack('B',len(ec))
 		gdata += struct.pack('>10s',struct.pack('<'+str(len(ec))+'s',ec))
 
 	#write data to file
@@ -120,7 +123,7 @@ def make_quesion_data(fin, fout, syserr, enc):
 		raise QuestionTooManyError, cnt
 	if len(qdata) > qdata_max :
 		raise QuestionSizeOverError, len(qdata)
-	hdata = struct.pack('>64s',struct.pack('>H',cnt)) + struct.pack('>192s', gdata)
+	hdata = struct.pack('>32s',struct.pack('>H',cnt)) + struct.pack('>224s', gdata)
 	fout.write(hdata)
 	idata = struct.pack('>1024s',idata)
 	fout.write(idata)
