@@ -103,6 +103,7 @@ def make_quesion_data(fin, fout, syserr, enc):
 		genre_index = get_genre_index(genre_list, sl[0])
 		qdata += struct.pack("B",1)
 		qdata += struct.pack('B',genre_index)
+		b += 2
 		cnt += 1
 
 	#make genre data
